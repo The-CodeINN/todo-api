@@ -1,0 +1,40 @@
+services:
+  todoapi:
+    image: ${DOCKER_REGISTRY-}todoapi
+    build:
+      context: .
+      dockerfile: src/TodoApi/todoapi.dockerfile
+
+  tododb:
+    image: postgres
+    container_name: tododb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=todo
+    ports:
+      - '5432:5432'
+    restart: always
+    volumes:
+      - postgres_todo:/var/lib/postgresql/data
+
+  vault:
+    build:
+      context: ./vault
+      dockerfile: Dockerfile
+    ports:
+      - '8200:8200'
+    volumes:
+      - vault-data:/vault/data
+      - ./vault/config:/vault/config
+    command: server -config=/vault/config/config.json
+    environment:
+      - VAULT_ADDR=http://127.0.0.1:8200
+      - VAULT_API_ADDR=http://127.0.0.1:8200
+    cap_add:
+      - IPC_LOCK
+
+volumes:
+  postgres_todo:
+  vault-data:
+  vault-config:
