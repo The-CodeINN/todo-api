@@ -1,6 +1,5 @@
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
-using VaultSharp.V1.Commons;
 
 namespace TodoApi.RequestHelpers;
 
@@ -15,9 +14,13 @@ public class VaultSecretProvider
         _vaultClient = new VaultClient(vaultClientSettings);
     }
 
-    public async Task<Secret<SecretData>> GetSecretAsync(string path, string mountPoint)
+    public async Task<string> GetSecretValueAsync(string path, string key, string mountPoint)
     {
-        return await _vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(path: path, mountPoint: mountPoint);
+        var secret = await _vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(path: path, mountPoint: mountPoint);
+        if (secret.Data.Data.TryGetValue(key, out var value))
+        {
+            return value.ToString();
+        }
+        throw new KeyNotFoundException($"Key '{key}' not found in Vault at path '{path}'");
     }
-
 }

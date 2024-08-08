@@ -3,7 +3,6 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Data;
 using TodoApi.Exceptions.HandlerMiddleware;
-using TodoApi.Extensions;
 using TodoApi.Middlewares;
 using TodoApi.Repositories;
 using TodoApi.RequestHelpers;
@@ -12,18 +11,15 @@ using TodoApi.Services;
 var builder = WebApplication.CreateBuilder(args);
 var assembly = typeof(Program).Assembly;
 
+
 var vaultUri = Environment.GetEnvironmentVariable("VAULT_ADDR");
 var vaultToken = Environment.GetEnvironmentVariable("VAULT_TOKEN");
 
 var vaultSecretsProvider = new VaultSecretProvider(vaultUri, vaultToken);
 
 // Add services to the container.
-builder.Configuration
-.AddEnvironmentVariables()
-    .AddVaultSecrets(vaultSecretsProvider, "todo", "secret");
 
-var defaultConnection = builder.Configuration["Database"];
-Console.WriteLine($"Database connection: {defaultConnection}");
+var defaultConnection = await vaultSecretsProvider.GetSecretValueAsync("todo", "Database", "secret");
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<TodoContext>(options =>
